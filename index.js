@@ -81,6 +81,9 @@
     en: {
       theme_to_light: 'Switch to light theme',
       theme_to_dark: 'Switch to dark theme',
+      cinema_play: 'Play invitation',
+      cinema_pause: 'Pause invitation',
+      cinema_replay: 'Replay invitation',
       intro_text:
         'With the blessings of Shri Ganesh and our beloved families, we joyfully invite you to celebrate the union of',
       parent_sub:
@@ -176,6 +179,9 @@
     hi: {
       theme_to_light: 'हल्की थीम पर जाएँ',
       theme_to_dark: 'गहरी थीम पर जाएँ',
+      cinema_play: 'निमंत्रण चलाएँ',
+      cinema_pause: 'निमंत्रण रोकें',
+      cinema_replay: 'निमंत्रण फिर से चलाएँ',
       intro_text:
         'श्री गणेश जी और अपने परिवारजनों के आशीर्वाद से, हम आपको इस पवित्र बंधन में सम्मिलित होने का हर्षपूर्वक निमंत्रण देते हैं',
       parent_sub:
@@ -306,6 +312,7 @@
       langBtn.title = lang === 'en' ? 'Switch to Hindi' : 'Switch to English';
     }
     updateThemeButton();
+    if (typeof updateCinemaButton === 'function') updateCinemaButton();
   }
 
   // Keep the language and theme controls together as a compact utility bar.
@@ -356,6 +363,12 @@
     if (videoIntro) videoIntro.style.display = 'none';
     if (main) main.classList.add('visible');
     document.body.classList.remove('no-scroll');
+    setTimeout(startAfterIntro, 1200);
+  }
+
+  // Start the cinematic autoplay; fall back to the swipe hint when motion is reduced.
+  function startAfterIntro() {
+    if (!(typeof startCinema === 'function' && startCinema())) showScrollHint();
   }
 
   function endVideoIntro() {
@@ -378,14 +391,14 @@
         flash.style.transition = 'opacity 0.6s ease-out';
         flash.style.opacity = '0';
         // Show swipe-up hint after a brief pause
-        setTimeout(showScrollHint, 1800);
+        setTimeout(startAfterIntro, 1800);
       }, 300);
     } else {
       if (videoIntro) videoIntro.style.display = 'none';
       if (main) main.classList.add('visible');
       document.body.classList.remove('no-scroll');
       // Show swipe-up hint after a brief pause
-      setTimeout(showScrollHint, 1800);
+      setTimeout(startAfterIntro, 1800);
     }
   }
 
@@ -430,6 +443,7 @@
     // No video element → show content immediately
     if (main) main.classList.add('visible');
     document.body.classList.remove('no-scroll');
+    if (!isMarried) setTimeout(startAfterIntro, 1200);
   }
 
   /* ── Scroll hint overlay (swipe-up gesture) ── */
@@ -647,16 +661,45 @@
       for (let i = 3; i < data.length; i += 4) {
         if (data[i] === 0) clear++;
       }
-      if (clear / (w * h) > 0.45) {
-        completed = true;
-        const item = canvas.closest('.scratch-item');
-        if (item) item.classList.add('is-scratched');
-        canvas.style.opacity = '0';
-        setTimeout(() => (canvas.style.display = 'none'), 400);
-        completedScratches++;
-        if (completedScratches === scratchCanvases.length) revealCountdown();
-      }
+      if (clear / (w * h) > 0.45) complete();
     }
+
+    function complete() {
+      if (completed) return;
+      completed = true;
+      const item = canvas.closest('.scratch-item');
+      if (item) item.classList.add('is-scratched');
+      canvas.style.opacity = '0';
+      setTimeout(() => (canvas.style.display = 'none'), 400);
+      completedScratches++;
+      if (completedScratches === scratchCanvases.length) revealCountdown();
+    }
+
+    // Used by the cinematic autoplay: sweep zig-zag strokes across the card.
+    canvas.autoScratch = (duration = 1100) =>
+      new Promise((resolve) => {
+        if (completed) return resolve();
+        const rows = 6;
+        const start = performance.now();
+        let lastT = 0;
+        const step = (now) => {
+          if (completed) return resolve();
+          const t = Math.min(1, (now - start) / duration);
+          for (let s = lastT; s <= t; s += 0.004) {
+            const row = Math.min(rows - 1, Math.floor(s * rows));
+            const within = s * rows - row;
+            const x = (row % 2 ? 1 - within : within) * w;
+            scratch(x, ((row + 0.5) / rows) * h);
+          }
+          lastT = t;
+          if (t < 1) requestAnimationFrame(step);
+          else {
+            complete();
+            resolve();
+          }
+        };
+        requestAnimationFrame(step);
+      });
 
     function getPos(e) {
       const rect = canvas.getBoundingClientRect();
@@ -878,6 +921,172 @@
       ).observe(storyTrack);
     }
   }
+
+  /* ── Cinematic autoplay: plays the invitation like a video ─────────
+   *  Gently auto-scrolls scene by scene, holding on each one; the scratch
+   *  cards reveal themselves. Any touch/scroll/key pauses it; the floating
+   *  play button resumes. Disabled for prefers-reduced-motion.
+   * ---------------------------------------------------------------------- */
+  const CINEMA_SPEED = 70; // px per second
+  const CINEMA_HOLD = 2600; // ms pause on each scene
+  const cinemaReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cinemaHolds = { 'story-section': 6500, 'countdown-section': 1800 };
+  let cinemaState = 'idle'; // idle | playing | paused | ended
+  let cinemaRaf = null;
+  let cinemaLast = 0;
+  let cinemaPos = 0;
+  let cinemaHoldUntil = 0;
+  let cinemaBusy = false;
+  const cinemaPassed = new WeakSet();
+
+  const cinemaProgress = document.createElement('div');
+  cinemaProgress.className = 'cinema-progress';
+  cinemaProgress.innerHTML = '<span></span>';
+  document.body.appendChild(cinemaProgress);
+
+  const cinemaBtn = document.createElement('button');
+  cinemaBtn.type = 'button';
+  cinemaBtn.className = 'cinema-toggle';
+  document.body.appendChild(cinemaBtn);
+
+  function cinemaScenes() {
+    return Array.from(
+      document.querySelectorAll(
+        '#main-content section:not(.countdown-hidden), #main-content .event-block, #footer-section'
+      )
+    ).filter((el) => el.offsetParent !== null && el.id !== 'hero');
+  }
+
+  function maxScroll() {
+    return document.documentElement.scrollHeight - window.innerHeight;
+  }
+
+  function updateCinemaButton() {
+    const key =
+      cinemaState === 'playing' ? 'cinema_pause' : cinemaState === 'ended' ? 'cinema_replay' : 'cinema_play';
+    const icons = {
+      cinema_pause:
+        '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>',
+      cinema_play:
+        '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"></path></svg>',
+      cinema_replay:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path></svg>',
+    };
+    cinemaBtn.innerHTML = icons[key];
+    cinemaBtn.setAttribute('aria-label', i18n[currentLang][key]);
+    cinemaBtn.title = i18n[currentLang][key];
+    cinemaBtn.classList.toggle('is-paused', cinemaState !== 'playing');
+    document.body.classList.toggle('cinema-playing', cinemaState === 'playing');
+  }
+
+  function updateCinemaProgress() {
+    const max = maxScroll();
+    const pct = max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0;
+    cinemaProgress.firstChild.style.width = `${pct}%`;
+  }
+  window.addEventListener('scroll', updateCinemaProgress, { passive: true });
+
+  async function playScratchScene() {
+    cinemaBusy = true;
+    for (const canvas of scratchCanvases) {
+      if (cinemaState !== 'playing') break;
+      if (canvas.autoScratch) await canvas.autoScratch();
+      await new Promise((r) => setTimeout(r, 350));
+    }
+    cinemaBusy = false;
+    cinemaHoldUntil = performance.now() + CINEMA_HOLD;
+  }
+
+  function cinemaTick(now) {
+    if (cinemaState !== 'playing') return;
+    const dt = Math.min(0.05, (now - cinemaLast) / 1000);
+    cinemaLast = now;
+
+    if (!cinemaBusy && now >= cinemaHoldUntil) {
+      const max = maxScroll();
+      cinemaPos = Math.min(max, cinemaPos + CINEMA_SPEED * dt);
+      window.scrollTo({ top: cinemaPos, behavior: 'instant' });
+
+      // Hold when the next scene's top reaches the top of the viewport.
+      const offset = Math.min(90, window.innerHeight * 0.12);
+      for (const scene of cinemaScenes()) {
+        if (cinemaPassed.has(scene)) continue;
+        if (scene.getBoundingClientRect().top <= offset) {
+          cinemaPassed.add(scene);
+          cinemaHoldUntil = now + (cinemaHolds[scene.id] || (scene.classList.contains('story-section') ? cinemaHolds['story-section'] : CINEMA_HOLD));
+          if (scene.id === 'countdown-section' && completedScratches < scratchCanvases.length) {
+            playScratchScene();
+          }
+        }
+        break;
+      }
+
+      if (cinemaPos >= max - 1) {
+        cinemaState = 'ended';
+        updateCinemaButton();
+        return;
+      }
+    }
+    cinemaRaf = requestAnimationFrame(cinemaTick);
+  }
+
+  function playCinema() {
+    if (cinemaReduced) return false;
+    if (cinemaState === 'ended') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    // Scenes already above the viewport count as watched.
+    cinemaScenes().forEach((scene) => {
+      if (scene.getBoundingClientRect().top <= window.innerHeight * 0.12) cinemaPassed.add(scene);
+    });
+    if (cinemaState === 'ended') {
+      cinemaScenes().forEach((s) => cinemaPassed.delete(s));
+    }
+    cinemaPos = window.scrollY;
+    cinemaState = 'playing';
+    cinemaLast = performance.now();
+    cinemaHoldUntil = cinemaLast + 600;
+    updateCinemaButton();
+    cancelAnimationFrame(cinemaRaf);
+    cinemaRaf = requestAnimationFrame(cinemaTick);
+    return true;
+  }
+
+  function pauseCinema() {
+    if (cinemaState !== 'playing') return;
+    cinemaState = 'paused';
+    cancelAnimationFrame(cinemaRaf);
+    updateCinemaButton();
+  }
+
+  // Exposed to the intro handler above.
+  function startCinema() {
+    cinemaBtn.classList.add('is-visible');
+    cinemaProgress.classList.add('is-visible');
+    const started = playCinema();
+    if (started) cinemaHoldUntil = performance.now() + CINEMA_HOLD;
+    return started;
+  }
+
+  cinemaBtn.addEventListener('click', () => {
+    cinemaState === 'playing' ? pauseCinema() : playCinema();
+  });
+
+  // Any manual interaction pauses playback (except on the floating controls).
+  const userTookOver = (e) => {
+    if (e.target.closest && e.target.closest('.cinema-toggle, .utility-controls, .btn-micro[style*="fixed"]')) return;
+    pauseCinema();
+  };
+  ['wheel', 'touchstart', 'pointerdown'].forEach((evt) =>
+    window.addEventListener(evt, userTookOver, { passive: true })
+  );
+  window.addEventListener('keydown', (e) => {
+    if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key) || e.target.matches('input, textarea, select')) {
+      pauseCinema();
+    }
+  });
+  updateCinemaButton();
+  if (cinemaReduced) cinemaBtn.hidden = true;
 
   /* ── RSVP form → Google Sheet ─────────────────────────────────────────
    *  Responses are POSTed to a Google Apps Script Web App, which appends

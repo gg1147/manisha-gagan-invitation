@@ -6,6 +6,39 @@
 }
 
 :root {
+    --cream: #17101c;
+    --cream-2: #211725;
+    --cream-3: #2b1d2a;
+    --sage: #d98a3b;
+    --sage-dark: #a95622;
+    --sage-deep: #f0ad62;
+    --sage-light: #ffd27c;
+    --sage-pale: #38251c;
+    --sage-border: rgba(255, 205, 128, 0.22);
+    --gold: #e0a846;
+    --gold-light: #ffd27c;
+    --gold-pale: #4a321c;
+    --text-dark: #fff2de;
+    --text-mid: #e6c49e;
+    --text-light: #b99573;
+    --border: rgba(255, 205, 128, 0.2);
+    --white: #241927;
+    --primary-rgb: 217, 138, 59;
+    --primary-dark-rgb: 169, 86, 34;
+    --primary-deep-rgb: 240, 173, 98;
+    --accent-rgb: 224, 168, 70;
+    --shadow: 0 24px 64px -12px rgba(15, 8, 18, 0.58);
+    --shadow-sm: 0 8px 24px rgba(15, 8, 18, 0.28);
+    --shadow-md: 0 16px 48px -8px rgba(15, 8, 18, 0.4);
+    --on-deep-color: #fff;
+    --font-display: "Distrela", "Italianno", cursive;
+    --font-body: "Cormorant Garamond", Georgia, serif;
+    --font-sans: "Tenor Sans", sans-serif;
+    --font-script: "Italianno", cursive;
+    --stable-vh: 100svh
+}
+
+body.light-theme {
     --cream: #fdfbf7;
     --cream-2: #faf5f0;
     --cream-3: #f2eae1;
@@ -30,12 +63,6 @@
     --shadow: 0 24px 64px -12px #8a4f4c1f;
     --shadow-sm: 0 8px 24px #8a4f4c0f;
     --shadow-md: 0 16px 48px -8px #8a4f4c24;
-    --on-deep-color: #fff;
-    --font-display: "Distrela", "Italianno", cursive;
-    --font-body: "Cormorant Garamond", Georgia, serif;
-    --font-sans: "Tenor Sans", sans-serif;
-    --font-script: "Italianno", cursive;
-    --stable-vh: 100svh
 }
 
 *,:before,:after {
@@ -81,7 +108,7 @@ body.no-scroll {
 }
 
 body.no-scroll .btn-micro,
-body.no-scroll #lang-toggle {
+body.no-scroll .utility-controls {
     display: none!important;
     overflow: hidden!important
 }
@@ -2644,5 +2671,261 @@ body:not(:has(.cd-card--married)) {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+}
+
+/* Midnight-and-gold theme inspired by the supplied invitation reference. */
+body:not(.light-theme):not(:has(.cd-card--married)) {
+    background:
+        radial-gradient(ellipse 70% 50% at 50% 0%, rgba(224, 168, 70, 0.12), transparent 70%),
+        radial-gradient(ellipse 60% 40% at 100% 50%, rgba(217, 138, 59, 0.08), transparent 70%),
+        var(--cream);
+}
+
+body:not(.light-theme) #hero {
+    background:
+        radial-gradient(ellipse at 50% 12%, rgba(224, 168, 70, 0.16), transparent 55%),
+        linear-gradient(180deg, #1b1221 0%, var(--cream-2) 100%) !important;
+}
+
+body:not(.light-theme) .hero-card,
+body:not(.light-theme) .venue-card,
+body:not(.light-theme) .cd-card:not(.cd-card--married),
+body:not(.light-theme) .evt-details {
+    background: linear-gradient(155deg, rgba(42, 29, 43, 0.96), rgba(29, 20, 33, 0.96)) !important;
+    border-color: var(--sage-border) !important;
+    box-shadow:
+        0 24px 64px -18px rgba(8, 4, 11, 0.62),
+        0 0 28px rgba(224, 168, 70, 0.08),
+        0 0 0 1px rgba(255, 210, 124, 0.06) inset !important;
+}
+
+body:not(.light-theme) #venue-section,
+body:not(.light-theme) #events-section,
+body:not(.light-theme) #rsvp-section,
+body:not(.light-theme) #contacts-section,
+body:not(.light-theme) .scratch-section {
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(224, 168, 70, 0.08), transparent 58%),
+        var(--cream) !important;
+}
+
+body:not(.light-theme) .venue-card h3,
+body:not(.light-theme) .story-polaroid-caption {
+    color: var(--gold-light) !important;
+}
+
+body:not(.light-theme) .venue-card p {
+    color: var(--text-mid) !important;
+}
+
+body:not(.light-theme) .story-polaroid {
+    background: #f7f0e7;
+    color: #2c2a29;
+    box-shadow: 0 20px 48px rgba(8, 4, 11, 0.45);
+}
+
+body:not(.light-theme) .story-polaroid-caption {
+    color: #5f4434 !important;
+}
+
+body:not(.light-theme) #footer-section {
+    background:
+        radial-gradient(ellipse at top, rgba(224, 168, 70, 0.16), transparent 60%),
+        #100b13 !important;
+    border-top-color: rgba(255, 205, 128, 0.35);
+}
+
+body:not(.light-theme) .btn-micro {
+    background: rgba(36, 25, 39, 0.92) !important;
+    border-color: var(--sage-border) !important;
+    color: var(--gold-light) !important;
+    box-shadow: 0 8px 24px rgba(8, 4, 11, 0.4) !important;
+}
+
+.utility-controls {
+    position: fixed;
+    top: max(1rem, env(safe-area-inset-top));
+    right: max(1rem, env(safe-area-inset-right));
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.utility-button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--sage-border);
+    border-radius: 999px;
+    background: rgba(36, 25, 39, 0.88);
+    color: var(--text-dark);
+    box-shadow: 0 8px 24px rgba(8, 4, 11, 0.3);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.utility-button:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
+}
+
+.utility-button:focus-visible {
+    outline: 2px solid var(--gold-light) !important;
+    outline-offset: 3px;
+}
+
+.utility-button--icon {
+    width: 44px;
+    padding: 0;
+    color: var(--gold-light);
+}
+
+.utility-button svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+}
+
+body.light-theme .utility-button {
+    background: rgba(255, 253, 248, 0.92);
+    color: var(--sage-deep);
+    box-shadow: 0 8px 24px rgba(92, 34, 51, 0.12);
+}
+
+body.light-theme .utility-button--icon {
+    color: var(--sage-deep);
+}
+
+@media (max-width: 600px) {
+    .utility-controls {
+        top: max(0.75rem, env(safe-area-inset-top));
+        right: max(0.75rem, env(safe-area-inset-right));
+        gap: 0.4rem;
+    }
+
+    .utility-button {
+        min-height: 42px;
+    }
+
+    .utility-button--icon {
+        width: 42px;
+    }
+}
+
+/* Three large, heart-shaped scratch cards stay together on one row. */
+#countdown-section.scratch-section {
+    min-height: auto;
+    padding: clamp(3.5rem, 9vh, 6rem) 1rem 3rem;
+}
+
+#countdown-section .scratch-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: clamp(0.5rem, 3vw, 1.5rem);
+    width: min(100%, 700px);
+    margin-inline: auto;
+}
+
+#countdown-section .scratch-item {
+    min-width: 0;
+    gap: clamp(0.55rem, 2vw, 1rem);
+}
+
+#countdown-section .scratch-label {
+    letter-spacing: 0.18em;
+    font-size: clamp(0.58rem, 2.5vw, 0.85rem);
+}
+
+#countdown-section .scratch-card-wrapper {
+    width: min(100%, 190px);
+    height: auto;
+    aspect-ratio: 1.12 / 1;
+    border: 0;
+    clip-path: polygon(
+        50% 100%,
+        42% 92%,
+        33% 83%,
+        23% 73%,
+        14% 62%,
+        7% 52%,
+        2% 42%,
+        0 33%,
+        1% 24%,
+        5% 16%,
+        12% 10%,
+        20% 8%,
+        28% 9%,
+        36% 13%,
+        43% 20%,
+        50% 28%,
+        57% 20%,
+        64% 13%,
+        72% 9%,
+        80% 8%,
+        88% 10%,
+        95% 16%,
+        99% 24%,
+        100% 33%,
+        98% 42%,
+        93% 52%,
+        86% 62%,
+        77% 73%,
+        67% 83%,
+        58% 92%
+    );
+    background: var(--sage-dark);
+    box-shadow: 0 15px 35px rgba(var(--primary-deep-rgb), 0.22);
+    animation: none;
+}
+
+#countdown-section .scratch-value {
+    color: var(--white);
+    font-size: clamp(1.8rem, 7vw, 3.2rem);
+    font-weight: 600;
+}
+
+#countdown-section .scratch-canvas {
+    clip-path: inherit;
+}
+
+#countdown-section .scratch-card-wrapper:hover {
+    transform: translateY(-3px) scale(1.04);
+}
+
+#countdown-section .scratch-item.is-scratched .scratch-card-wrapper {
+    box-shadow: 0 12px 28px rgba(var(--primary-deep-rgb), 0.16);
+}
+
+.wedding-countdown.countdown-hidden {
+    display: none !important;
+}
+
+.wedding-countdown {
+    min-height: auto;
+    padding: 0 1rem 5rem;
+}
+
+.wedding-countdown .cd-card {
+    width: min(100%, 460px);
+}
+
+@media (max-width: 360px) {
+    #countdown-section .scratch-grid {
+        gap: 0.35rem;
+    }
+
+    #countdown-section .scratch-label {
+        letter-spacing: 0.12em;
     }
 }

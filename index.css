@@ -2929,3 +2929,74 @@ body.light-theme .utility-button--icon {
         letter-spacing: 0.12em;
     }
 }
+
+.lagan-invite-frame {
+    aspect-ratio: 2 / 3;
+}
+
+.rsvp-event-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem;
+    border: 1px solid var(--sage-border);
+    border-radius: 0.8rem;
+    background: rgba(var(--primary-deep-rgb), 0.03);
+    color: var(--sage-deep);
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.rsvp-event-option:has(input:checked) {
+    border-color: var(--sage-deep);
+    background: rgba(var(--primary-deep-rgb), 0.09);
+}
+
+.rsvp-event-option:focus-within {
+    outline: 2px solid var(--sage-deep);
+    outline-offset: 3px;
+}
+
+.rsvp-event-option__details {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.rsvp-event-option__name {
+    font-size: 1.15rem;
+}
+
+.rsvp-event-option__date {
+    color: var(--text-light);
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.rsvp-event-option input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.rsvp-event-option__check {
+    display: grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: 0 0 1.5rem;
+    place-items: center;
+    border: 2px solid var(--sage-deep);
+    border-radius: 0.4rem;
+    color: white;
+    opacity: 0.35;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.rsvp-event-option:has(input:checked) .rsvp-event-option__check {
+    background: var(--sage-deep);
+    opacity: 1;
+}

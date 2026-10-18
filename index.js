@@ -93,11 +93,6 @@
       the_date: 'The Date',
       our_story: 'Our Story',
       forever_us: 'Forever Us',
-      the_venue: 'The Venue',
-      where: 'Where',
-      venue_quote:
-        'Join us as we celebrate amidst open skies and golden sunsets',
-      view_maps: 'VIEW ON MAPS',
       festivities: 'Festivities',
       celebrations_unfold: 'The Celebrations Unfold',
       rsvp_join: 'Join the Celebration',
@@ -132,6 +127,12 @@
       haldi: 'Haldi Ceremony',
       sangeet: 'Sangeet Night',
       wedding: 'Sun Downer Wedding',
+      lagan_lekhan: 'Lagan Lekhan',
+      lagan_date: 'Monday · 16 November 2026 · 11:00 AM',
+      lagan_note: 'An auspicious beginning to the wedding celebrations.',
+      lagan_location: 'Ceremony location',
+      vibrant_colors: 'Vibrant colours',
+      dressnote_lagan: 'Wear any vibrant colours you like',
       countdown_quote: 'A lifetime of togetherness begins with one sacred step',
       the_wedding: 'The Wedding',
       scratch_month: 'MONTH',
@@ -185,10 +186,6 @@
       the_date: 'तारीख़',
       our_story: 'हमारी कहानी',
       forever_us: 'हमेशा साथ',
-      the_venue: 'स्थान',
-      where: 'कहाँ',
-      venue_quote: 'खुले आसमान और सुनहरी शाम में हमारे साथ जश्न मनाएँ',
-      view_maps: 'नक्शे पर देखें',
       festivities: 'उत्सव',
       celebrations_unfold: 'जश्न की शुरुआत',
       rsvp_join: 'जश्न में शामिल हों',
@@ -226,6 +223,12 @@
       haldi: 'हल्दी समारोह',
       sangeet: 'संगीत की रात',
       wedding: 'सनडाउनर विवाह',
+      lagan_lekhan: 'लग्न लेखन',
+      lagan_date: 'सोमवार · 16 नवंबर 2026 · सुबह 11:00 बजे',
+      lagan_note: 'विवाह उत्सव का एक शुभ आरंभ।',
+      lagan_location: 'समारोह का स्थान',
+      vibrant_colors: 'चटकीले रंग',
+      dressnote_lagan: 'अपनी पसंद के चटकीले रंग पहनें',
       countdown_quote: 'एक साथ जीवन भर की शुरुआत एक पवित्र कदम से होती है',
       the_wedding: 'विवाह',
       scratch_month: 'महीना',
@@ -559,7 +562,6 @@
     // Post-wedding: keep only the married card + "Our Story" section; hide everything else.
     const sectionIdsToHide = [
       'hero',
-      'venue-section',
       'events-section',
       'rsvp-section',
       'contacts-section',
@@ -604,7 +606,7 @@
   if (isMarried || scratchCanvases.length === 0) revealCountdown();
 
   scratchCanvases.forEach((canvas) => {
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const w = canvas.width;
     const h = canvas.height;
     let completed = false;
@@ -627,13 +629,15 @@
     canvas.style.display = 'block';
 
     let scratching = false;
+    let scratchMoves = 0;
 
     function scratch(x, y) {
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
       ctx.arc(x, y, Math.min(w, h) * 0.09, 0, Math.PI * 2);
       ctx.fill();
-      checkProgress();
+      scratchMoves++;
+      if (scratchMoves % 4 === 0) checkProgress();
     }
 
     function checkProgress() {
@@ -1060,11 +1064,4 @@
     }, { passive: true });
   }
 
-  /* ── Venue button ── */
-  const venueBtn = document.querySelector('.venue-btn');
-  if (venueBtn) {
-    venueBtn.addEventListener('click', () => {
-      window.open('https://maps.app.goo.gl/Paa2zZ3nJZ9rDPaq6', '_blank');
-    });
-  }
 })();

@@ -79,6 +79,8 @@
   /* ── Language Toggle (EN ↔ HI) ──────────────────────────────────── */
   const i18n = {
     en: {
+      theme_to_light: 'Switch to light theme',
+      theme_to_dark: 'Switch to dark theme',
       intro_text:
         'With the blessings of Shri Ganesh and our beloved families, we joyfully invite you to celebrate the union of',
       parent_sub:
@@ -171,6 +173,8 @@
         'Your love, blessings and presence made our day truly magical. We are forever grateful.',
     },
     hi: {
+      theme_to_light: 'हल्की थीम पर जाएँ',
+      theme_to_dark: 'गहरी थीम पर जाएँ',
       intro_text:
         'श्री गणेश जी और अपने परिवारजनों के आशीर्वाद से, हम आपको इस पवित्र बंधन में सम्मिलित होने का हर्षपूर्वक निमंत्रण देते हैं',
       parent_sub:
@@ -266,6 +270,20 @@
 
   let currentLang = 'en';
 
+  function updateThemeButton() {
+    const themeToggle = document.getElementById('theme-toggle');
+    if (!themeToggle) return;
+
+    const isLight = document.body.classList.contains('light-theme');
+    const label = i18n[currentLang][isLight ? 'theme_to_dark' : 'theme_to_light'];
+    const icon = isLight
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 15.2A8.5 8.5 0 0 1 8.8 3.5 8.5 8.5 0 1 0 20.5 15.2Z"></path></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>';
+    themeToggle.innerHTML = icon;
+    themeToggle.title = label;
+    themeToggle.setAttribute('aria-label', label);
+  }
+
   function applyLanguage(lang) {
     currentLang = lang;
     document.querySelectorAll('[data-i18n]').forEach((el) => {
@@ -284,37 +302,37 @@
       langBtn.textContent = lang === 'en' ? 'हिंदी' : 'EN';
       langBtn.title = lang === 'en' ? 'Switch to Hindi' : 'Switch to English';
     }
+    updateThemeButton();
   }
+
+  // Keep the language and theme controls together as a compact utility bar.
+  const utilityControls = document.createElement('div');
+  utilityControls.className = 'utility-controls';
+  utilityControls.setAttribute('aria-label', 'Invitation display settings');
+
+  const themeToggle = document.createElement('button');
+  themeToggle.id = 'theme-toggle';
+  themeToggle.type = 'button';
+  themeToggle.className = 'utility-button utility-button--icon';
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('light-theme');
+    updateThemeButton();
+  });
+  utilityControls.appendChild(themeToggle);
 
   // Inject language toggle button
   const langToggle = document.createElement('button');
   langToggle.id = 'lang-toggle';
   langToggle.textContent = 'हिंदी';
   langToggle.title = 'Switch to Hindi';
-  langToggle.style.cssText = `
-    position: fixed;
-    top: 1.5rem;
-    right: 1.5rem;
-    z-index: 1000;
-    width: auto;
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-    background: rgba(255,255,255,0.95);
-    border: 1px solid rgb(220,209,196);
-    font-family: var(--font-sans, sans-serif);
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: rgb(138,79,76);
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    transition: 0.3s;
-    backdrop-filter: blur(8px);
-    letter-spacing: 0.05em;
-  `;
+  langToggle.type = 'button';
+  langToggle.className = 'utility-button';
   langToggle.addEventListener('click', () => {
     applyLanguage(currentLang === 'en' ? 'hi' : 'en');
   });
-  document.body.appendChild(langToggle);
+  utilityControls.appendChild(langToggle);
+  document.body.appendChild(utilityControls);
+  updateThemeButton();
 
   /* ── Wedding date (used by video-intro skip + countdown) ── */
   const WEDDING_DATE = new Date('2026-11-20T15:00:00+05:30');
@@ -507,7 +525,7 @@
   function updateCountdown() {
     const now = new Date();
     const diff = WEDDING_DATE - now;
-    const card = document.querySelector('#countdown-section .cd-card');
+    const card = document.querySelector('.wedding-countdown .cd-card');
 
     if (diff > 0) {
       const days = Math.floor(diff / 86400000);
@@ -551,10 +569,9 @@
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
-    // Hide the pre-wedding "Save the Date" scratch section (duplicate #countdown-section without a .cd-card)
-    document.querySelectorAll('#countdown-section').forEach((sec) => {
-      if (!sec.querySelector('.cd-card')) sec.style.display = 'none';
-    });
+    // Hide the pre-wedding "Save the Date" scratch section.
+    const scratchSection = document.getElementById('countdown-section');
+    if (scratchSection) scratchSection.style.display = 'none';
 
     buildMarriedView(card);
 
@@ -575,10 +592,22 @@
 
   /* ── Scratch cards ── */
   const scratchCanvases = document.querySelectorAll('.scratch-canvas');
+  const countdownSection = document.querySelector('.wedding-countdown');
+  let completedScratches = 0;
+
+  function revealCountdown() {
+    if (!countdownSection || !countdownSection.classList.contains('countdown-hidden')) return;
+    countdownSection.classList.remove('countdown-hidden');
+    countdownSection.setAttribute('aria-hidden', 'false');
+  }
+
+  if (isMarried || scratchCanvases.length === 0) revealCountdown();
+
   scratchCanvases.forEach((canvas) => {
     const ctx = canvas.getContext('2d');
     const w = canvas.width;
     const h = canvas.height;
+    let completed = false;
 
     // Draw rose-themed overlay (matches wedding palette)
     ctx.fillStyle = '#8a4f4c';
@@ -591,9 +620,9 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#f5ecd4';
-    ctx.font = 'bold 14px sans-serif';
+    ctx.font = `bold ${Math.max(11, Math.round(Math.min(w, h) * 0.1))}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('✦ SCRATCH ✦', w / 2, h / 2 + 5);
+    ctx.fillText('SCRATCH', w / 2, h / 2 + 5);
     canvas.style.opacity = '1';
     canvas.style.display = 'block';
 
@@ -602,20 +631,26 @@
     function scratch(x, y) {
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
-      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.arc(x, y, Math.min(w, h) * 0.09, 0, Math.PI * 2);
       ctx.fill();
       checkProgress();
     }
 
     function checkProgress() {
+      if (completed) return;
       const data = ctx.getImageData(0, 0, w, h).data;
       let clear = 0;
       for (let i = 3; i < data.length; i += 4) {
         if (data[i] === 0) clear++;
       }
       if (clear / (w * h) > 0.45) {
+        completed = true;
+        const item = canvas.closest('.scratch-item');
+        if (item) item.classList.add('is-scratched');
         canvas.style.opacity = '0';
         setTimeout(() => (canvas.style.display = 'none'), 400);
+        completedScratches++;
+        if (completedScratches === scratchCanvases.length) revealCountdown();
       }
     }
 
@@ -778,6 +813,66 @@
     storyTrack.addEventListener('scroll', updateStoryButtons, { passive: true });
     window.addEventListener('resize', updateStoryButtons);
     updateStoryButtons();
+
+    /* Auto-advance the story photos, looping back to the first one */
+    const storyCards = Array.from(storyTrack.children);
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    let storyTimer = null;
+    let storyInView = false;
+
+    const cardOffset = (card) =>
+      card.getBoundingClientRect().left -
+      storyTrack.getBoundingClientRect().left +
+      storyTrack.scrollLeft -
+      (storyTrack.clientWidth - card.offsetWidth) / 2;
+
+    const advanceStory = () => {
+      const current = storyCards.reduce(
+        (best, card, i) =>
+          Math.abs(cardOffset(card) - storyTrack.scrollLeft) <
+          Math.abs(cardOffset(storyCards[best]) - storyTrack.scrollLeft)
+            ? i
+            : best,
+        0
+      );
+      const next = (current + 1) % storyCards.length;
+      storyTrack.scrollTo({
+        left: Math.max(0, cardOffset(storyCards[next])),
+        behavior: 'smooth',
+      });
+    };
+
+    const stopStoryAutoplay = () => {
+      clearInterval(storyTimer);
+      storyTimer = null;
+    };
+    const startStoryAutoplay = () => {
+      if (reduceMotion || !storyInView || storyTimer) return;
+      storyTimer = setInterval(advanceStory, 1500);
+    };
+
+    ['mouseenter', 'touchstart', 'focusin', 'pointerdown'].forEach((evt) =>
+      storyTrack.parentElement.addEventListener(evt, stopStoryAutoplay, {
+        passive: true,
+      })
+    );
+    ['mouseleave', 'touchend', 'focusout'].forEach((evt) =>
+      storyTrack.parentElement.addEventListener(evt, startStoryAutoplay, {
+        passive: true,
+      })
+    );
+
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(
+        ([entry]) => {
+          storyInView = entry.isIntersecting;
+          storyInView ? startStoryAutoplay() : stopStoryAutoplay();
+        },
+        { threshold: 0.4 }
+      ).observe(storyTrack);
+    }
   }
 
   /* ── RSVP form → Google Sheet ─────────────────────────────────────────

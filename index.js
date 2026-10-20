@@ -413,6 +413,11 @@
     tryPlay();
     introVideo.addEventListener('loadeddata', tryPlay);
     introVideo.addEventListener('canplay', tryPlay);
+    introVideo.removeAttribute('controls');
+    // Autoplay blocked (e.g. low-power mode): start silently on the first touch.
+    ['touchstart', 'pointerdown', 'click'].forEach((evt) =>
+      document.addEventListener(evt, tryPlay, { once: true, passive: true })
+    );
 
     let videoUnmuted = false;
 

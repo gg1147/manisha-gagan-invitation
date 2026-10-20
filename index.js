@@ -420,14 +420,24 @@
   if (introVideo && videoIntro && !isMarried) {
     // Autoplay muted video immediately (no black screen wait)
     introVideo.muted = true;
+    introVideo.defaultMuted = true;
+    introVideo.playsInline = true;
     videoOverlay.classList.add('hidden');
-    // Retry as soon as data is ready; first frame stays visible as the preview meanwhile.
+    // Retry until playback really starts; mobile browsers often reject the first attempt.
     const tryPlay = () => {
       if (introVideo.paused) introVideo.play().catch(() => {});
     };
     tryPlay();
+    let retries = 0;
+    const retryTimer = setInterval(() => {
+      if (!introVideo.paused || ++retries > 20) return clearInterval(retryTimer);
+      tryPlay();
+    }, 250);
+    introVideo.addEventListener('loadedmetadata', tryPlay);
     introVideo.addEventListener('loadeddata', tryPlay);
     introVideo.addEventListener('canplay', tryPlay);
+    window.addEventListener('pageshow', tryPlay);
+    document.addEventListener('visibilitychange', tryPlay);
     introVideo.removeAttribute('controls');
     // Autoplay blocked (e.g. low-power mode): start silently on the first touch.
     ['touchstart', 'pointerdown', 'click'].forEach((evt) =>

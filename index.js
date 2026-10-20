@@ -405,15 +405,14 @@
   if (introVideo && videoIntro && !isMarried) {
     // Autoplay muted video immediately (no black screen wait)
     introVideo.muted = true;
-    // Mobile may block autoplay (e.g. low-power mode): show a tap prompt instead of a black screen.
     videoOverlay.classList.add('hidden');
-    const showTapPrompt = () => videoOverlay.classList.remove('hidden');
-    introVideo.addEventListener('playing', () => videoOverlay.classList.add('hidden'));
-    const p = introVideo.play();
-    if (p && p.catch) p.catch(showTapPrompt);
-    setTimeout(() => {
-      if (introVideo.paused) showTapPrompt();
-    }, 1500);
+    // Retry as soon as data is ready; first frame stays visible as the preview meanwhile.
+    const tryPlay = () => {
+      if (introVideo.paused) introVideo.play().catch(() => {});
+    };
+    tryPlay();
+    introVideo.addEventListener('loadeddata', tryPlay);
+    introVideo.addEventListener('canplay', tryPlay);
 
     let videoUnmuted = false;
 

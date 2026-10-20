@@ -359,9 +359,11 @@
   let playing = false;
 
   const MUSIC_START = 6; // seconds
+  const MUSIC_VOLUME = 0.3;
   let musicSeeked = false;
   function startMusic() {
     if (!audio) return;
+    audio.volume = MUSIC_VOLUME;
     if (!musicSeeked) {
       musicSeeked = true;
       try {
@@ -439,6 +441,13 @@
     window.addEventListener('pageshow', tryPlay);
     document.addEventListener('visibilitychange', tryPlay);
     introVideo.removeAttribute('controls');
+    // Autoplay blocked outright (e.g. iOS Low Power Mode): skip to the card instead of leaving a stuck frame.
+    setTimeout(() => {
+      if (introVideo.paused && introVideo.currentTime === 0) {
+        introVideo.pause();
+        endVideoIntro();
+      }
+    }, 4000);
     // Autoplay blocked (e.g. low-power mode): start silently on the first touch.
     ['touchstart', 'pointerdown', 'click'].forEach((evt) =>
       document.addEventListener(evt, tryPlay, { once: true, passive: true })

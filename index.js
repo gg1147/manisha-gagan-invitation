@@ -149,7 +149,7 @@
       story_2: 'Written in the stars',
       story_3: 'Joy and laughter',
       story_4: 'Forever Us',
-      venue_name: 'Sahib Farms & Resorts',
+      venue_name: 'Sahib Resorts',
       tagline_haldi: '"A joyful splash of turmeric, blessings, and laughter."',
       tagline_sangeet: '"An evening of music, dance, and endless celebration."',
       tagline_wedding: '"Vows beneath the setting sun to begin our forever."',
@@ -248,7 +248,7 @@
       story_2: 'सितारों में लिखा',
       story_3: 'खुशियाँ और हँसी',
       story_4: 'हमेशा साथ',
-      venue_name: 'साहिब फार्म्स & रिसॉर्ट्स',
+      venue_name: 'साहिब रिसॉर्ट्स',
       tagline_haldi: '"हल्दी, आशीर्वाद और हँसी का खुशनुमा रंग।"',
       tagline_sangeet: '"संगीत, नृत्य और अनंत उत्सव की एक शाम।"',
       tagline_wedding: '"डूबते सूरज के नीचे हमेशा साथ रहने का वादा।"',
@@ -405,12 +405,34 @@
   if (introVideo && videoIntro && !isMarried) {
     // Autoplay muted video immediately (no black screen wait)
     introVideo.muted = true;
-    introVideo.play().catch(() => {});
+    // Mobile may block autoplay (e.g. low-power mode): show a tap prompt instead of a black screen.
     videoOverlay.classList.add('hidden');
+    const showTapPrompt = () => videoOverlay.classList.remove('hidden');
+    introVideo.addEventListener('playing', () => videoOverlay.classList.add('hidden'));
+    const p = introVideo.play();
+    if (p && p.catch) p.catch(showTapPrompt);
+    setTimeout(() => {
+      if (introVideo.paused) showTapPrompt();
+    }, 1500);
 
     let videoUnmuted = false;
 
     videoIntro.addEventListener('click', function handler() {
+      if (introVideo.paused && !videoUnmuted) {
+        // Autoplay was blocked: first tap starts playback with sound
+        videoUnmuted = true;
+        introVideo.muted = false;
+        introVideo.play().catch(() => {
+          introVideo.muted = true;
+          introVideo.play().catch(() => {});
+        });
+        videoOverlay.classList.add('hidden');
+        if (audio) {
+          audio.play().catch(() => {});
+          playing = true;
+        }
+        return;
+      }
       if (!videoUnmuted) {
         // First tap → unmute video, start bg music, let video keep playing
         videoUnmuted = true;

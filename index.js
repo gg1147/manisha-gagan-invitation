@@ -372,7 +372,12 @@
   function startMusic() {
     if (!audio) return;
     audio.volume = MUSIC_VOLUME;
-    audio.play().catch(() => {});
+    audio.muted = false;
+    // Blocked with sound: run it muted so the first gesture only has to unmute (already at the right spot).
+    audio.play().catch(() => {
+      audio.muted = true;
+      audio.play().catch(() => {});
+    });
   }
 
   const ICON_MUSIC_ON = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
@@ -380,25 +385,23 @@
 
   // `playing` mirrors the real audio state, so a blocked autoplay never leaves it stuck on.
   if (audio) {
-    audio.addEventListener('playing', () => {
-      playing = true;
-      if (btn) btn.innerHTML = ICON_MUSIC_ON;
-    });
-    audio.addEventListener('pause', () => {
-      playing = false;
-      if (btn) btn.innerHTML = ICON_MUSIC_OFF;
-    });
+    const syncMusicState = () => {
+      playing = !audio.paused && !audio.muted;
+      if (btn) btn.innerHTML = playing ? ICON_MUSIC_ON : ICON_MUSIC_OFF;
+    };
+    ['playing', 'pause', 'volumechange'].forEach((evt) => audio.addEventListener(evt, syncMusicState));
   }
 
-  // Browsers block unmuted audio before a gesture: try now, then on every gesture until it plays.
+  // Browsers block sound before a gesture: unmute/start on every gesture until it is audible.
   if (audio) {
-    const gestureEvents = ['touchend', 'pointerup', 'click', 'keydown'];
+    const gestureEvents = ['touchend', 'pointerup', 'mouseup', 'click', 'keydown'];
     const unlockMusic = () => {
-      if (!audio.paused) {
+      if (!audio.paused && !audio.muted) {
         gestureEvents.forEach((evt) => document.removeEventListener(evt, unlockMusic));
         return;
       }
-      startMusic();
+      if (audio.paused) startMusic();
+      else audio.muted = false;
     };
     gestureEvents.forEach((evt) => document.addEventListener(evt, unlockMusic));
     startMusic();
@@ -566,7 +569,7 @@
   /* ── Music toggle ── */
   if (btn && audio) {
     btn.addEventListener('click', () => {
-      if (audio.paused) startMusic();
+      if (audio.paused || audio.muted) startMusic();
       else audio.pause();
     });
   }
